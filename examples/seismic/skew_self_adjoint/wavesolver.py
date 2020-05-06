@@ -1,4 +1,3 @@
-import numpy as np
 from devito import Function, TimeFunction
 from examples.seismic import PointSource, Receiver
 from examples.seismic.skew_self_adjoint.utils import *
@@ -115,9 +114,8 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Build the operator and execute
         op = ISO_FwdOperator(model, src, rec, self.time_axis,
                              space_order=self.space_order, save=save, **self._kwargs)
-        # f = open("operator1.cpp", "w")
-        # print(op.ccode, file=f)
-        # f.close()
+        rec.data[:] = 0
+        u.data[:] = 0
         summary = op.apply(u=u, **kwargs)
         return rec, u, summary
 
@@ -176,6 +174,8 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Build the operator and execute
         op = ISO_AdjOperator(model, src, rec, self.time_axis,
                              space_order=self.space_order, save=save, **self._kwargs)
+        src.data[:] = 0
+        u.data[:] = 0
         summary = op.apply(u=u, **kwargs)
         return src, u, summary
 
@@ -244,6 +244,9 @@ class SSA_ISO_AcousticWaveSolver(object):
                                      space_order=self.space_order,
                                      save=save, **self._kwargs)
 
+        rec.data[:] = 0
+        u0.data[:] = 0
+        du.data[:] = 0
         summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
         return rec, u0, du, summary
 
@@ -302,5 +305,8 @@ class SSA_ISO_AcousticWaveSolver(object):
         op = ISO_JacobianAdjOperator(model, rec, self.time_axis,
                                      space_order=self.space_order,
                                      save=save, **self._kwargs)
+
+        dm.data[:] = 0
+        du.data[:] = 0
         summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
         return dm, u0, du, summary

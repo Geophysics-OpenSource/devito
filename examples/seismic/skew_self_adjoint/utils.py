@@ -68,7 +68,7 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     val = exp(lqmin + pos * (lqmax - lqmin))
 
     # 2020.05.04 currently does not support spatial smoothing of the Q field
-    # due to MPI weirdness in reassignment of the numpy array 
+    # due to MPI weirdness in reassignment of the numpy array
     eqn1 = Eq(wOverQ, w / val)
     Operator([eqn1], name='WOverQ_Operator')()
 
@@ -83,6 +83,7 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
 #         wOverQ.data[:] = smooth
 #     eqn2 = Eq(wOverQ, w / wOverQ)
 #     Operator([eqn2], name='WOverQ_Operator_recip')()
+
 
 def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
     """
@@ -167,8 +168,10 @@ def defaultSetupIso(npad, shape, dtype,
     Return:
         dictionary of velocity, buoyancy, and wOverQ
         TimeAxis defining temporal sampling
-        Source locations: [center x, center y, top z]
-        Receiver locations: line of receivers at [line x, center y, center z)
+        Source locations: one located at center of model, z = 1dz
+        Receiver locations, one per interior grid intersection, z = 2dz
+            2D: 1D grid of receivers center z covering interior of model
+            3D: 2D grid of receivers center z covering interior of model
     """
     d = 10.0
     origin = tuple([0.0 - d * npad for s in shape])
@@ -195,24 +198,30 @@ def defaultSetupIso(npad, shape, dtype,
     dt = dtype("%.6f" % (0.8 * critical_dt(v)))
     time_axis = TimeAxis(start=tmin, stop=tmax, step=dt)
 
-    nr = shape[0] - 2 * npad
-    src_coords = np.empty((1, len(shape)), dtype=dtype)
-    rec_coords = np.empty((nr, len(shape)), dtype=dtype)
-
-    # Define coordinates
+    # Define coordinates in 2D and 3D
     if len(shape) == 2:
+        nr = shape[0] - 2 * npad
+        src_coords = np.empty((1, len(shape)), dtype=dtype)
+        rec_coords = np.empty((nr, len(shape)), dtype=dtype)
         src_coords[:, 0] = origin[0] + extent[0] / 2
         src_coords[:, 1] = 1 * d
-
         rec_coords[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
         rec_coords[:, 1] = 2 * d
     else:
+        # using numpy outer product here for array iteration speed
+        xx, yy = np.ogrid[:shape[0]-2*npad, :shape[1]-2*npad]
+        x1 = np.ones((shape[0] - 2 * npad, 1))
+        y1 = np.ones((1, shape[1] - 2 * npad))
+        xcoord = (xx*y1).reshape(-1)
+        ycoord = (x1*yy).reshape(-1)
+        nr = len(xcoord)
+        src_coords = np.empty((1, len(shape)), dtype=dtype)
+        rec_coords = np.empty((nr, len(shape)), dtype=dtype)
         src_coords[:, 0] = origin[0] + extent[0] / 2
         src_coords[:, 1] = origin[1] + extent[1] / 2
         src_coords[:, 2] = 1 * d
-
-        rec_coords[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
-        rec_coords[:, 1] = origin[1] + extent[1] / 2
+        rec_coords[:, 0] = d * xcoord
+        rec_coords[:, 1] = d * ycoord
         rec_coords[:, 2] = 2 * d
 
 #         for kr in range(nr):

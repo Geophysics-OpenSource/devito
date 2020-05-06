@@ -50,10 +50,10 @@ plt_extent = [origin[0], origin[0] + spacing[0]*(shape[0]-1),
 b1 = 0.0
 b2 = d * (n - 2 * npad)
 
-plt.figure(figsize=(21,10))
+plt.figure(figsize=(21, 10))
 
 plt.subplot(1, 3, 1)
-plt.imshow(np.transpose(qa.data), cmap=cm.jet_r, 
+plt.imshow(np.transpose(qa.data), cmap=cm.jet_r,
            vmin=qmin, vmax=qmax, extent=plt_extent)
 plt.colorbar(orientation='horizontal', label='Q(x,z)')
 plt.plot([b1, b1, b2, b2, b1],

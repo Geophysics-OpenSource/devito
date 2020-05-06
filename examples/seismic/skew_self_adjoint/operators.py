@@ -1,6 +1,6 @@
 # TODO figure out if can get time sampling from the SparseTimeFuntions src/rec
 # TODO replace the conditional logic in the stencil with comprehension
-from devito import Eq, Operator, Function, TimeFunction, Inc
+from devito import Eq, Operator, Function, TimeFunction
 
 
 def iso_stencil(field, model, **kwargs):
@@ -108,7 +108,6 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     assert 'wOverQ' in model, "model dictionary must contain key 'wOverQ'"
     b = model['b']
     v = model['v']
-    wOverQ = model['wOverQ']
 
     # Create symbols for wavefield, source and receivers
     u = TimeFunction(name='u', grid=v.grid,
@@ -168,7 +167,6 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     assert 'wOverQ' in model, "model dictionary must contain key 'wOverQ'"
     b = model['b']
     v = model['v']
-    wOverQ = model['wOverQ']
 
     # Create symbols for wavefield, source and receivers
     u = TimeFunction(name='u', grid=v.grid,
@@ -324,5 +322,9 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
 
-    return Operator(eqn + rec_term + [dm_update], subs=spacing_map,
+    return Operator([dm_update] + eqn + rec_term, subs=spacing_map,
                     name='ISO_JacobianAdjOperator', **kwargs)
+
+    # note this is broken somehow: possibly a different path is chosen through the AST?
+    # return Operator(eqn + rec_term + [dm_update], subs=spacing_map,
+    #                 name='ISO_JacobianAdjOperator', **kwargs)

@@ -1,6 +1,6 @@
 import numpy as np
 from devito import configuration
-from examples.seismic import RickerSource, Receiver
+from examples.seismic import RickerSource
 from examples.seismic.skew_self_adjoint import *
 
 configuration['language'] = 'openmp'
@@ -37,4 +37,3 @@ print("grid.spacing;   ", v.grid.spacing)
 tol = 1.e-12
 a = np.random.rand()
 rec, _, _ = solver.forward(src)
-

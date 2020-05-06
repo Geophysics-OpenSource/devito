@@ -64,9 +64,17 @@ These notebooks first implement and then test for correctness for three types of
   - [X] Modeling operator linearity test, with respect to source
   - [X] Modeling operator adjoint test, with respect to source
   - [X] Nonlinear operator linearization test, with respect to model/data
-  - [ ] Jacobian operator linearity test, with respect to model/data
-  - [ ] Jacobian operator adjoint test, with respect to model/data
-  - [ ] Skew symmetry test for shifted derivatives
+  - [X] Jacobian operator linearity test, with respect to model/data
+  - [X] Jacobian operator adjoint test, with respect to model/data
+  - [X] Skew symmetry test for shifted derivatives
+
+## To save generated code 
+
+```
+f = open("operator.c", "w")
+print(op.ccode, file=f)
+f.close()
+```
 
 ## Some commands for performance testing thread scaling on AMD 7502
 ```
