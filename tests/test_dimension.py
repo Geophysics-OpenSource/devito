@@ -9,9 +9,8 @@ from devito import (ConditionalDimension, Grid, Function, TimeFunction, SparseFu
                     Eq, Operator, Constant, Dimension, SubDimension, switchconfig,
                     SubDomain)
 from devito.ir.iet import Expression, Iteration, FindNodes, retrieve_iteration_tree
-from devito.symbolics import indexify, retrieve_functions
+from devito.symbolics import indexify, retrieve_functions, CondEq
 from devito.types import Array
-from devito.types.equation import CondEq
 
 
 class TestSubDimension(object):

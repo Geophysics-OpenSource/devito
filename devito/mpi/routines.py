@@ -14,11 +14,10 @@ from devito.ir.iet import (Call, Callable, Conditional, Expression, ExpressionBu
                            make_efunc, FindNodes, Transformer)
 from devito.ir.support import AFFINE, PARALLEL
 from devito.mpi import MPI
-from devito.symbolics import (Byref, FieldFromPointer, FieldFromComposite,
+from devito.symbolics import (Byref, CondNe, FieldFromPointer, FieldFromComposite,
                               IndexedPointer, Macro)
 from devito.tools import OrderedSet, dtype_to_mpitype, dtype_to_ctype, flatten, generator
 from devito.types import Array, Dimension, Symbol, LocalObject, CompositeObject
-from devito.types.equation import CondNe
 
 __all__ = ['HaloExchangeBuilder']
 

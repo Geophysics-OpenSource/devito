@@ -9,12 +9,11 @@ from devito.ir import (DummyEq, Conditional, Block, Expression, ExpressionBundle
                        Prodder, Iteration, While, FindSymbols, FindNodes, Return,
                        COLLAPSED, VECTORIZED, Transformer, IsPerfectIteration,
                        retrieve_iteration_tree, filter_iterations)
-from devito.symbolics import INT
+from devito.symbolics import CondEq, INT
 from devito.parameters import configuration
 from devito.passes.iet.engine import iet_pass
 from devito.tools import as_tuple, is_integer, prod
 from devito.types import Constant, Symbol
-from devito.types.equation import CondEq
 
 __all__ = ['NThreads', 'NThreadsNested', 'NThreadsNonaffine', 'Ompizer',
            'ParallelIteration', 'ParallelTree']
