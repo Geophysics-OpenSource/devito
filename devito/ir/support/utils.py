@@ -8,7 +8,7 @@ from devito.tools import as_tuple, flatten, filter_sorted
 from devito.types import Dimension, ModuloDimension
 
 __all__ = ['detect_accesses', 'detect_oobs', 'build_iterators', 'build_intervals',
-           'detect_io', 'indexify_expr']
+           'detect_io']
 
 
 def detect_accesses(exprs):

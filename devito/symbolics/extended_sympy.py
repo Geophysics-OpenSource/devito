@@ -9,47 +9,9 @@ from sympy import Expr, Integer, Function, Symbol
 from devito.symbolics.printer import ccode
 from devito.tools import Pickable, as_tuple, is_integer
 
-__all__ = ['CondEq', 'CondNe', 'IntDiv', 'FunctionFromPointer', 'FieldFromPointer',
+__all__ = ['IntDiv', 'FunctionFromPointer', 'FieldFromPointer',
            'FieldFromComposite', 'ListInitializer', 'Byref', 'IndexedPointer',
            'Macro', 'Literal', 'INT', 'FLOAT', 'DOUBLE', 'FLOOR', 'cast_mapper']
-
-
-class CondEq(sympy.Eq):
-
-    """
-    A customized version of sympy.Eq representing a conditional equality.
-    It suppresses evaluation.
-    """
-
-    def __new__(cls, *args, **kwargs):
-        return sympy.Eq.__new__(cls, *args, evaluate=False)
-
-    @property
-    def canonical(self):
-        return self
-
-    @property
-    def negated(self):
-        return CondNe(*self.args, evaluate=False)
-
-
-class CondNe(sympy.Ne):
-
-    """
-    A customized version of sympy.Ne representing a conditional inequality.
-    It suppresses evaluation.
-    """
-
-    def __new__(cls, *args, **kwargs):
-        return sympy.Ne.__new__(cls, *args, evaluate=False)
-
-    @property
-    def canonical(self):
-        return self
-
-    @property
-    def negated(self):
-        return CondEq(*self.args, evaluate=False)
 
 
 class IntDiv(sympy.Expr):

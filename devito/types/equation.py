@@ -58,6 +58,7 @@ class Eq(sympy.Eq, Evaluable):
     """
 
     is_Increment = False
+    is_CondEq = False
 
     def __new__(cls, lhs, rhs=0, subdomain=None, coefficients=None, implicit_dims=None,
                 **kwargs):
@@ -204,6 +205,52 @@ class Inc(Eq):
 
     def __str__(self):
         return "Inc(%s, %s)" % (self.lhs, self.rhs)
+
+    __repr__ = __str__
+
+
+class CondEq(Eq):
+
+    """
+    A customized version of sympy.Eq representing a conditional equality.
+    It suppresses evaluation.
+    """
+
+    is_CondEq = True
+
+    def __str__(self):
+        return "CondEq(%s, %s)" % (self.lhs, self.rhs)
+
+    @property
+    def canonical(self):
+        return self
+
+    @property
+    def negated(self):
+        return CondNe(*self.args, evaluate=False)
+
+    __repr__ = __str__
+
+
+class CondNe(Eq):
+
+    """
+    A customized version of sympy.Ne representing a conditional inequality.
+    It suppresses evaluation.
+    """
+
+    is_CondEq = True
+
+    def __str__(self):
+        return "CondNe(%s, %s)" % (self.lhs, self.rhs)
+
+    @property
+    def canonical(self):
+        return self
+
+    @property
+    def negated(self):
+        return CondEq(*self.args, evaluate=False)
 
     __repr__ = __str__
 

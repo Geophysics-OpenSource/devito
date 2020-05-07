@@ -6,7 +6,7 @@ from devito.ir.support import Any, Backward, Forward, IterationSpace
 from devito.ir.clusters.analysis import analyze
 from devito.ir.clusters.cluster import Cluster, ClusterGroup
 from devito.ir.clusters.queue import QueueStateful
-from devito.symbolics import CondEq
+from devito.types.equation import CondEq
 from devito.tools import timed_pass
 
 __all__ = ['clusterize']

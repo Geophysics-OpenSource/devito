@@ -6,10 +6,12 @@ import pytest
 
 from conftest import skipif
 from devito import (ConditionalDimension, Grid, Function, TimeFunction, SparseFunction,  # noqa
-                    Eq, Operator, Constant, Dimension, SubDimension, switchconfig)
+                    Eq, Operator, Constant, Dimension, SubDimension, switchconfig,
+                    SubDomain)
 from devito.ir.iet import Expression, Iteration, FindNodes, retrieve_iteration_tree
-from devito.symbolics import indexify, retrieve_functions, CondEq
+from devito.symbolics import indexify, retrieve_functions
 from devito.types import Array
+from devito.types.equation import CondEq
 
 
 class TestSubDimension(object):
@@ -833,10 +835,9 @@ class TestConditionalDimension(object):
     def test_condition_lowering(self):
         """
         Test the lowering of a ConditionalDimension's condition.
+        This test makes an Operator that should indexify and lower the condition
+        passed in the Conditional Dimension
         """
-
-        # This test makes an Operator that should indexify and lower the condition
-        # passed in the Conditional Dimension
 
         grid = Grid(shape=(3, 3))  # Define grid
 
@@ -850,6 +851,31 @@ class TestConditionalDimension(object):
         f = Function(name='f', shape=grid.shape, dimensions=(x, ci))
         Operator(Eq(f[x, ci], g[x, y])).apply()
         assert np.all(f.data == 1)
+
+    def test_condition_subdomains(self):
+        """
+        Test a ConditionalDimension applied in a subdomain.
+        """
+
+        class InnerDomain(SubDomain):
+            name = 'inner'
+
+            def define(self, dimensions):
+                return {d: ('middle', 2, 1) for d in dimensions}
+
+        inner_domain = InnerDomain()
+        grid = Grid(shape=(4, 4), subdomains=(inner_domain,))
+
+        g = Function(name='g', shape=grid.shape, dimensions=grid.dimensions)
+        x, y = grid.subdomains['inner'].dimensions
+
+        cond = CondEq(g[x, y], 0, subdomain=grid.subdomains['inner'])
+        ci = ConditionalDimension(name='ci', parent=y, condition=cond)
+
+        f = Function(name='f', shape=grid.shape, dimensions=(x, ci))
+        Eq1 = Eq(f, g + 2, subdomain=grid.subdomains['inner'])
+        Operator(Eq1).apply()
+        assert f.data[2, 2] == 2
 
     @skipif('device')
     def test_no_fusion_simple(self):

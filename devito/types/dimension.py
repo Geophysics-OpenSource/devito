@@ -6,12 +6,14 @@ from cached_property import cached_property
 
 from devito.data import LEFT, RIGHT
 from devito.exceptions import InvalidArgument
-# from devito.ir.support import indexify_expr
 from devito.logger import debug
-from devito.symbolics import (retrieve_indexed, retrieve_functions, uxreplace)
+from devito.symbolics import retrieve_indexed, retrieve_functions, uxreplace
 from devito.tools import Pickable, dtype_to_cstr, is_integer, memoized_meth
 from devito.types.args import ArgProvider
 from devito.types.basic import Symbol, DataSymbol, Scalar
+# from devito.ir.support import indexify_expr
+# from devito.types.equation import indexify_expr
+
 
 __all__ = ['Dimension', 'SpaceDimension', 'TimeDimension', 'DefaultDimension',
            'SteppingDimension', 'SubDimension', 'ConditionalDimension', 'dimensions',
@@ -718,7 +720,17 @@ class ConditionalDimension(DerivedDimension):
         # import pdb; pdb.set_trace()
         processed = []
         expr = condition
-        dimension_map = {}
+
+        # Awful TOFIX
+        try:
+            if expr.subdomain:
+                dimension_map = expr.subdomain.dimension_map
+            else:
+                dimension_map = {}
+        except:
+            dimension_map = {}
+
+        # import pdb; pdb.set_trace()
 
         # Handle Functions (typical case)
         mapper = {f: f.indexify(lshift=True, subs=dimension_map)
