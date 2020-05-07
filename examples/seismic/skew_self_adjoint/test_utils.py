@@ -1,9 +1,7 @@
 import numpy as np
 import pytest
-from devito import Grid, Function, configuration
+from devito import Grid, Function
 from examples.seismic.skew_self_adjoint import *
-configuration['language'] = 'openmp'
-configuration['log-level'] = 'ERROR'
 
 
 class TestUtils(object):

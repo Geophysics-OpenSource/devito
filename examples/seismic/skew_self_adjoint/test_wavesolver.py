@@ -1,10 +1,8 @@
 import numpy as np
 import pytest
-from devito import configuration, Grid, Function, Eq
+from devito import Grid, Function, Eq
 from examples.seismic import RickerSource
 from examples.seismic.skew_self_adjoint import *
-configuration['language'] = 'openmp'
-configuration['log-level'] = 'ERROR'
 
 # Defaults in global scope
 npad = 10
@@ -13,16 +11,16 @@ qmin = 0.1
 qmax = 500.0
 tmax = 1000.0
 # shapes = [(101, 81), ]
-# space_orders = [8, ]
 shapes = [(101, 81), (101, 91, 81)]
-space_orders = [4, 8, ]
+dtypes = [np.float64, ]
+space_orders = [8, ]
 
 
 class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_linearity_forward_F(self, shape, dtype, so):
         """
@@ -57,7 +55,7 @@ class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_linearity_adjoint_F(self, shape, dtype, so):
         """
@@ -93,7 +91,7 @@ class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_adjoint_F(self, shape, dtype, so):
         """
@@ -125,7 +123,7 @@ class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_linearization_F(self, shape, dtype, so):
         """
@@ -155,7 +153,7 @@ class TestWavesolver(object):
         # Background model
         m0.data[:] = 1.5
 
-        # Model perturbation, box of constant values centered on middle of model
+        # Model perturbation, box of random values centered on middle of model
         dm.data[:] = 0
         size = 5
         ns = 2 * size + 1
@@ -203,7 +201,7 @@ class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_linearity_forward_J(self, shape, dtype, so):
         """
@@ -260,7 +258,7 @@ class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_linearity_adjoint_J(self, shape, dtype, so):
         """
@@ -316,7 +314,7 @@ class TestWavesolver(object):
 
     # @pytest.mark.skip(reason="temporarily skip")
     @pytest.mark.parametrize('shape', shapes)
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_adjoint_J(self, shape, dtype, so):
         """
@@ -373,10 +371,10 @@ class TestWavesolver(object):
         diff = (sum_m - sum_d) / (sum_m + sum_d)
         print("\nadjoint J %s (so=%d) sum_m, sum_d, diff; %16.10e %+16.10e %+16.10e" %
               (shape, so, sum_m, sum_d, diff))
-        assert np.isclose(diff, 0., atol=1.e-12)
+        assert np.isclose(diff, 0., atol=1.e-11)
 
     # @pytest.mark.skip(reason="temporarily skip")
-    @pytest.mark.parametrize('dtype', [np.float64, ])
+    @pytest.mark.parametrize('dtype', dtypes)
     @pytest.mark.parametrize('so', space_orders)
     def test_derivative_skew_symmetry(self, dtype, so):
         """
