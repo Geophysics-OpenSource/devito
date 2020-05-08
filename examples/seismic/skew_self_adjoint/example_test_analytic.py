@@ -13,11 +13,12 @@ configuration['language'] = 'openmp'
 # configuration['log-level'] = 'DEBUG'
 
 # Time / frequency
-nt = 1501
+nt = 1251
 dt = 0.1
 tmin = 0.0
 tmax = dt * (nt - 1)
 fpeak = 0.090
+t0w = 1.0 / fpeak
 omega = 2.0 * np.pi * fpeak
 time_axis = TimeAxis(start=tmin, stop=tmax, step=dt)
 time = np.linspace(tmin, tmax, nt)
@@ -65,11 +66,9 @@ solver = SSA_ISO_AcousticWaveSolver(npad, qmin, qmax, omega, b, v,
                                     space_order=space_order)
 
 # Source function 
-t0w = 1.5 / fpeak
 src = RickerSource(name='src', grid=v.grid, f0=fpeak, npoint=1, 
                    time_range=time_axis, t0w=t0w)
 src.coordinates.data[:] = src_coords[:]
-print("src    min/max; %+12.6e %+12.6e" % (np.min(src.data), np.max(src.data)))
 
 # Numerical solution
 recNum, uNum, _ = solver.forward(src)
@@ -105,10 +104,8 @@ def analytic_response():
     df = 1.0 / tmaxpad
     faxis = df * np.arange(nf)
 
-    print("srcpad min/max; %+12.6e %+12.6e" % (np.min(srcpad.data), np.max(srcpad.data)))
-    
     # Take the Fourier transform of the source time-function
-    R = np.fft.fft(srcpad.data[:])
+    R = np.fft.fft(srcpad.wavelet[:])
     R = R[0:nf]
     nf = len(R)
 
@@ -128,15 +125,12 @@ def analytic_response():
 uAnaPad, srcpad = analytic_response()
 uAna = uAnaPad[0:nt]
 
-print("len(ana); %5d" % (len(uAna)))
-print("len(num); %5d" % (len(recNum.data)))
-
 nmin, nmax = np.min(recNum.data), np.max(recNum.data)
 amin, amax = np.min(uAna), np.max(uAna)
 
-print("recNum min/max; %+12.6e %+12.6e" % (nmin, nmax))
-print("recAna min/max; %+12.6e %+12.6e" % (amin, amax))
-print("ratio  min/max; %+12.6e %+12.6e" % (nmin / amin, nmax / amax))
+print("")
+print("Numerical min/max; %+12.6e %+12.6e" % (nmin, nmax))
+print("Analytic  min/max; %+12.6e %+12.6e" % (amin, amax))
 
 # Plot
 x1 = origin[0]
@@ -153,55 +147,43 @@ plt_extent = [x1, x2, z2, z1]
 abc_pairsX = [xABC1, xABC1, xABC2, xABC2, xABC1] 
 abc_pairsZ = [zABC1, zABC2, zABC2, zABC1, zABC1] 
 
-# plt.figure(figsize=(12.5,12.5))
-plt.figure(figsize=(10,10))
-
-amax = np.max(np.abs(uNum.data[1,:,:]))
+plt.figure(figsize=(12.5,12))
 
 # Plot wavefield
-# plt.subplot(2,2,1)
-# plt.imshow(uNum.data[1,:,:], vmin=-amax, vmax=+amax, cmap="seismic",
-#            aspect="auto", extent=plt_extent)
-# plt.plot(src_coords[0, 0], src_coords[0, 1], 'r*', markersize=11, label='Source') 
-# plt.plot(rec_coords[0, 0], rec_coords[0, 1], 'k^', markersize=11, label='Receiver') 
-# plt.plot(abc_pairsX, abc_pairsZ, 'black', linewidth=4, linestyle=':', 
-#          label="ABC")
-# plt.legend()
-# plt.xlabel('x position (m)')
-# plt.ylabel('z position (m)')
-# plt.title('Wavefield of numerical solution')
-# plt.tight_layout()
+plt.subplot(2,2,1)
+amax = 1.1 * np.max(np.abs(recNum.data[:]))
+plt.imshow(uNum.data[1,:,:], vmin=-amax, vmax=+amax, cmap="seismic",
+           aspect="auto", extent=plt_extent)
+plt.plot(src_coords[0, 0], src_coords[0, 1], 'r*', markersize=15, label='Source') 
+plt.plot(rec_coords[0, 0], rec_coords[0, 1], 'k^', markersize=11, label='Receiver') 
+plt.plot(abc_pairsX, abc_pairsZ, 'black', linewidth=4, linestyle=':', 
+         label="ABC")
+plt.legend(loc="center", bbox_to_anchor=(0.325, 0.625, 0.35, .1))
+plt.xlabel('x position (m)')
+plt.ylabel('z position (m)')
+plt.title('Wavefield of numerical solution')
+plt.tight_layout()
 
 # Plot trace
-amaxNum = np.max(np.abs(recNum.data))
-amaxAna = np.max(np.abs(uAna))
-print("amaxNum,amaxAna; ", amaxNum, amaxAna)
-# plt.subplot(2,2,3)
-plt.subplot(2,1,1)
-plt.plot(time, recNum.data[:, 0] / amaxNum, '-b', label='Numerical solution')
-plt.plot(time, uAna[:] / amaxAna, '--r', label='Analytic solution')
-# plt.xlim([0,150])
-# plt.ylim([1.15*np.min(U_t[:]), 1.15*np.max(U_t[:])])
+plt.subplot(2,2,3)
+plt.plot(time, recNum.data[:, 0], '-b', label='Numerical solution')
+plt.plot(time, uAna[:], '--r', label='Analytic solution')
+plt.xlim([50,90])
 plt.xlabel('Time (ms)')
 plt.ylabel('Amplitude')
-plt.legend(loc="upper right")
+plt.title('Trace comparison of solutions')
+plt.legend(loc="lower right")
+plt.ylim([-amax, +amax])
 
-print(len(src.data[0:nt]))
-print(len(srcpad.data[0:nt]))
-
-plt.subplot(2,1,2)
-plt.plot(time, src.data[0:nt],    '-b', label='Src')
-plt.plot(time, srcpad.data[0:nt], '-r', label='Src Pad')
+plt.subplot(2,2,4)
+plt.plot(time, 100 * (recNum.data[:, 0] -  uAna[:]), '-k', label='Difference x100')
+plt.xlim([50,90])
 plt.xlabel('Time (ms)')
 plt.ylabel('Amplitude')
-plt.legend(loc="upper right")
+plt.title('Difference of solutions (x100)')
+plt.legend(loc="lower right")
+plt.ylim([-amax, +amax])
 
-# plt.subplot(2,1,2)
-# plt.plot(time, 100 *(ref_rec.data[:, 0] - U_t[:]), '-b', label='difference x100')
-# plt.xlim([0,150])
-# plt.ylim([1.15*np.min(U_t[:]), 1.15*np.max(U_t[:])])
-# plt.xlabel('time (ms)')
-# plt.ylabel('amplitude x100')
-# plt.legend()
-# plt.savefig('wavefieldperf.pdf')
+plt.tight_layout()
+plt.savefig("accuracy.png")
 plt.show()

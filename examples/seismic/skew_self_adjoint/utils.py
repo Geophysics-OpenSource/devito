@@ -4,7 +4,7 @@ from devito import (Grid, Constant, Function, SpaceDimension, Eq, Operator)
 from examples.seismic import TimeAxis
 from devito.builtins import gaussian_smooth
 
-__all__ = ['critical_dt', 'setup_wOverQ', 'setup_wOverQ_numpy', 'defaultSetupIso']
+__all__ = ['critical_dt', 'setup_wOverQ', 'defaultSetupIso']
 
 
 def critical_dt(v):
@@ -12,7 +12,8 @@ def critical_dt(v):
     Determine the temporal sampling to satisfy CFL stability.
     This method replicates the functionality in the Model class.
 
-    Note we add a safety factor, reducing dt by a factor 0.9.
+    Note we add a safety factor, reducing dt by a factor 0.75 due to the 
+    w/Q attentuation term.
 
     Parameters
     ----------
@@ -20,7 +21,7 @@ def critical_dt(v):
         velocity
     """
     coeff = 0.38 if len(v.grid.shape) == 3 else 0.42
-    dt = 0.9 * v.dtype(coeff * np.min(v.grid.spacing) / (np.max(v.data)))
+    dt = 0.75 * v.dtype(coeff * np.min(v.grid.spacing) / (np.max(v.data)))
     return v.dtype("%.5e" % dt)
 
 
@@ -83,79 +84,6 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
 #         wOverQ.data[:] = smooth
 #     eqn2 = Eq(wOverQ, w / wOverQ)
 #     Operator([eqn2], name='WOverQ_Operator_recip')()
-
-
-def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
-    """
-    Initialise spatially variable w/Q field used to implement attenuation and
-    absorb outgoing waves at the edges of the model.
-
-    Uses an outer product via numpy.ogrid[:n1, :n2] to speed up loop traversal
-    for 2d and 3d. TODO: stop wasting so much memory with 9 tmp arrays ...
-    Note results in 9 temporary numpy arrays for 3D.
-
-    Parameters
-    ----------
-    wOverQ : Function, required
-        The omega over Q field used to implement attenuation in the model,
-        and the absorbing boundary condition for outgoing waves.
-    w : float32, required
-        center angular frequency, e.g. peak frequency of Ricker source wavelet
-        used for modeling.
-    qmin : float32, required
-        Q value at the edge of the model. Typically set to 0.1 to strongly
-        attenuate outgoing waves.
-    qmax : float32, required
-        Q value in the interior of the model. Typically set to 100 as a
-        reasonable and physically meaningful Q value.
-    npad : int, required
-        Number of points in the absorbing boundary region. Note that we expect
-        this to be the same on all sides of the model.
-    sigma : float32, optional, defaults to None
-        sigma value for call to scipy gaussian smoother, default 5.
-    """
-    # sanity checks
-    assert w > 0, "supplied w value [%f] must be positive" % (w)
-    assert qmin > 0, "supplied qmin value [%f] must be positive" % (qmin)
-    assert qmax > 0, "supplied qmax value [%f] must be positive" % (qmax)
-    assert npad > 0, "supplied npad value [%f] must be positive" % (npad)
-    for n in wOverQ.grid.shape:
-        if n - 2*npad < 1:
-            raise ValueError("2 * npad must not exceed dimension size!")
-
-    lqmin = np.log(qmin)
-    lqmax = np.log(qmax)
-
-    if len(wOverQ.grid.shape) == 2:
-        # 2d operations
-        nx, nz = wOverQ.grid.shape
-        kxMin, kzMin = np.ogrid[:nx, :nz]
-        kxArr, kzArr = np.minimum(kxMin, nx-1-kxMin), np.minimum(kzMin, nz-1-kzMin)
-        nval1 = np.minimum(kxArr, kzArr)
-        nval2 = np.minimum(1, nval1/(npad))
-        nval3 = np.exp(lqmin+nval2*(lqmax-lqmin))
-        wOverQ.data[:, :] = w / nval3
-
-    else:
-        # 3d operations
-        nx, ny, nz = wOverQ.grid.shape
-        kxMin, kyMin, kzMin = np.ogrid[:nx, :ny, :nz]
-        kxArr = np.minimum(kxMin, nx-1-kxMin)
-        kyArr = np.minimum(kyMin, ny-1-kyMin)
-        kzArr = np.minimum(kzMin, nz-1-kzMin)
-        nval1 = np.minimum(kxArr, np.minimum(kyArr, kzArr))
-        nval2 = np.minimum(1, nval1/(npad))
-        nval3 = np.exp(lqmin+nval2*(lqmax-lqmin))
-        wOverQ.data[:, :, :] = w / nval3
-
-    # Note if we apply the gaussian smoother, renormalize output to [qmin,qmax]
-    if sigma > 0:
-        print("sigma=", sigma)
-        nval2[:] = gaussian_smooth(nval3, sigma=sigma)
-        nmin2, nmax2 = np.min(nval2), np.max(nval2)
-        nval3[:] = qmin + (qmax - qmin) * (nval2 - nmin2) / (nmax2 - nmin2)
-
-    wOverQ.data[:] = w / nval3
 
 
 def defaultSetupIso(npad, shape, dtype,
