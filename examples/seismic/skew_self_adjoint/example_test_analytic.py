@@ -10,7 +10,7 @@ from matplotlib import cm
 mpl.rc('font', size=14)
 plt.rcParams['figure.facecolor'] = 'white'
 configuration['language'] = 'openmp'
-# configuration['log-level'] = 'DEBUG'
+configuration['log-level'] = 'DEBUG'
 
 # Time / frequency
 nt = 1251
