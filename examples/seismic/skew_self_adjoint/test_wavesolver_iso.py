@@ -438,7 +438,6 @@ class TestWavesolver(object):
         t0w = 1.0 / fpeak
         omega = 2.0 * np.pi * fpeak
         time_axis = TimeAxis(start=tmin, stop=tmax, step=dt)
-        time = np.linspace(tmin, tmax, nt)
 
         # Model
         space_order = 8
@@ -446,7 +445,6 @@ class TestWavesolver(object):
         dx, dz = 0.5, 0.5
         nx, nz = 801 + 2 * npad, 801 + 2 * npad
         shape = (nx, nz)
-        spacing = (dx, dz)
         extent = (dx * (nx - 1), dz * (nz - 1))
         origin = (0.0 - dx * npad, 0.0 - dz * npad)
         dtype = np.float64
@@ -462,7 +460,7 @@ class TestWavesolver(object):
         b.data[:] = 1.0
         v.data[:] = v0
 
-        # Source and reciver coordinates 
+        # Source and reciver coordinates
         src_coords = np.empty((1, 2), dtype=dtype)
         rec_coords = np.empty((1, 2), dtype=dtype)
         src_coords[:, 0] = origin[0] + extent[0] / 2
@@ -475,8 +473,8 @@ class TestWavesolver(object):
                                             src_coords, rec_coords, time_axis,
                                             space_order=space_order)
 
-        # Source function 
-        src = RickerSource(name='src', grid=v.grid, f0=fpeak, npoint=1, 
+        # Source function
+        src = RickerSource(name='src', grid=v.grid, f0=fpeak, npoint=1,
                            time_range=time_axis, t0w=t0w)
         src.coordinates.data[:] = src_coords[:]
 
@@ -486,28 +484,26 @@ class TestWavesolver(object):
         # Analytic response
         def analytic_response():
             """
-            Computes analytic solution of 2D acoustic wave-equation with Ricker wavelet 
+            Computes analytic solution of 2D acoustic wave-equation with Ricker wavelet
             peak frequency fpeak, temporal padding 20x per the accuracy notebook:
             examples/seismic/acoustic/accuracy.ipynb
-                u(r,t) = 1/(2 pi) sum[ -i pi H_0^2(k,r) q(w) e^{i w t} dw 
+                u(r,t) = 1/(2 pi) sum[ -i pi H_0^2(k,r) q(w) e^{i w t} dw
                 where:
                     r = sqrt{(x_s - x_r)^2 + (z_s - z_r)^2}
-                    w = 2 pi f 
+                    w = 2 pi f
                     q(w) = Fourier transform of Ricker source wavelet
                     H_0^2(k,r) Hankel function of the second kind
-                    k = w/v (wavenumber) 
+                    k = w/v (wavenumber)
             """
             sx, sz = src_coords[0, :]
             rx, rz = rec_coords[0, :]
             ntpad = 20 * (nt - 1) + 1
             tmaxpad = dt * (ntpad - 1)
             time_axis_pad = TimeAxis(start=tmin, stop=tmaxpad, step=dt)
-            timepad = np.linspace(tmin, tmaxpad, ntpad)
             print(time_axis_pad)
-            srcpad = RickerSource(name='srcpad', grid=v.grid, f0=fpeak, npoint=1, 
+            srcpad = RickerSource(name='srcpad', grid=v.grid, f0=fpeak, npoint=1,
                                   time_range=time_axis_pad, t0w=t0w)
             nf = int(ntpad / 2 + 1)
-            fnyq = 1.0 / (2 * dt)
             df = 1.0 / tmaxpad
             faxis = df * np.arange(nf)
 
@@ -519,9 +515,9 @@ class TestWavesolver(object):
             # Compute the Hankel function and multiply by the source spectrum
             U_a = np.zeros((nf), dtype=complex)
             for a in range(1, nf - 1):
-                w = 2 * np.pi * faxis[a] 
+                w = 2 * np.pi * faxis[a]
                 r = np.sqrt((rx - sx)**2 + (rz - sz)**2)
-                U_a[a] = -1j * np.pi * hankel2(0.0,  w * r / v0) * R[a]
+                U_a[a] = -1j * np.pi * hankel2(0.0, w * r / v0) * R[a]
 
             # Do inverse fft on 0:dt:T and you have analytical solution
             U_t = 1.0/(2.0 * np.pi) * np.real(np.fft.ifft(U_a[:], ntpad))
@@ -538,7 +534,8 @@ class TestWavesolver(object):
         arms = np.max(np.abs(uAna))
         drms = np.max(np.abs(diff))
 
-        print("\nMaximum absolute numerical,analytic,diff; %+12.6e %+12.6e %+12.6e" % (nrms, arms, drms))
+        print("\nMaximum absolute numerical,analytic,diff; %+12.6e %+12.6e %+12.6e" %
+              (nrms, arms, drms))
 
         # This isnt a very strict tolerance ...
         tol = 0.1

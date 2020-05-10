@@ -2,7 +2,7 @@ from sympy import exp, Min
 import numpy as np
 from devito import (Grid, Constant, Function, SpaceDimension, Eq, Operator)
 from examples.seismic import TimeAxis
-from devito.builtins import gaussian_smooth
+# from devito.builtins import gaussian_smooth
 
 __all__ = ['critical_dt', 'setup_wOverQ', 'defaultSetupIso']
 
@@ -12,7 +12,7 @@ def critical_dt(v):
     Determine the temporal sampling to satisfy CFL stability.
     This method replicates the functionality in the Model class.
 
-    Note we add a safety factor, reducing dt by a factor 0.75 due to the 
+    Note we add a safety factor, reducing dt by a factor 0.75 due to the
     w/Q attentuation term.
 
     Parameters
